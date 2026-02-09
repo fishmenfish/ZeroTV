@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![ZeroTV](https://img.shields.io/badge/ZeroTV-v1.0.0-blue?style=flat-square)
+![ZeroTV](https://img.shields.io/badge/ZeroTV-v1.1.0-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue?style=flat-square)
 
@@ -18,15 +18,19 @@ Built with Angular 21, Tauri 2, and Rust
 
 ZeroTV is a simple IPTV player that doesn't try to do everything. It plays your M3U playlists and stays out of your way. That's it.
 
+**Current Version: 1.1.0** - [See what's new](CHANGELOG.md)
+
 ## Features
 
 - M3U/M3U8 playlist support
 - Search and favorites
 - HLS streaming with HLS.js
-- EPG program guide
+- EPG program guide (XMLTV)
 - Auto-reconnect when stream drops
+- Stream health monitoring (bitrate, FPS, buffer)
 - Keyboard shortcuts
-- Actually lightweight (around 10 MB)
+- Settings export/import
+- Actually lightweight (~10 MB)
 
 ## Installation
 
@@ -63,17 +67,19 @@ Check [BUILD.md](BUILD.md) for more details.
 |-----|--------|
 | `↑` `↓` | Previous/Next channel |
 | `Space` | Play/Pause |
-| `M` | Mute |
-| `+` `-` | Volume |
+| `M` | Mute/Unmute |
+| `+` `-` | Volume up/down |
 | `F` | Fullscreen |
-| `1-9` | Quick jump |
+| `Esc` | Exit fullscreen |
+| `1-9` | Quick jump to channel |
 
 ## Tech Stack
 
-- Angular 21
-- Tauri 2
-- Rust
-- HLS.js
+- Angular 21 (Standalone Components, Signals)
+- Tauri 2 (Rust backend)
+- TypeScript 5.9
+- HLS.js 1.6
+- RxJS 7.8
 
 ## Support
 
