@@ -36,6 +36,10 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "publisher": "fishmenfish",
+    "copyright": "Copyright © 2026 fishmenfish",
+    "shortDescription": "Ultra-lightweight IPTV player",
+    "longDescription": "ZeroTV is a zero bloat IPTV player - Ultra-lightweight, blazing fast streaming experience for your favorite channels."
   }
 }
