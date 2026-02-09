@@ -75,6 +75,12 @@ Check [BUILD.md](BUILD.md) for more details.
 - Rust
 - HLS.js
 
+## Support
+
+Feel free to support this project if you find it useful:
+
+- [PayPal](https://paypal.me/muhammadfaiz0817)
+
 ## License
 
 MIT License - see [LICENSE](LICENSE)
@@ -84,7 +90,6 @@ MIT License - see [LICENSE](LICENSE)
 **fishmenfish**
 
 - GitHub: [@fishmenfish](https://github.com/fishmenfish)
-- Support: [PayPal](https://paypal.me/muhammadfaiz0817)
 
 ---
 
