@@ -14,43 +14,48 @@ Built with Angular 21, Tauri 2, and Rust
 
 ---
 
+## What's This?
+
+ZeroTV is a simple IPTV player that doesn't try to do everything. It plays your M3U playlists and stays out of your way. That's it.
+
 ## Features
 
-- 📺 M3U/M3U8 playlist support
-- 🔍 Search & favorites
-- 🎬 HTML5 video player with HLS.js
-- 📅 EPG program guide
-- 🔄 Auto-reconnect
-- ⌨️ Keyboard shortcuts
-- 💾 Lightweight (~10 MB)
+- M3U/M3U8 playlist support
+- Search and favorites
+- HLS streaming with HLS.js
+- EPG program guide
+- Auto-reconnect when stream drops
+- Keyboard shortcuts
+- Actually lightweight (around 10 MB)
 
 ## Installation
 
 ### Download
 
-Download the latest Windows installer:
-- [ZeroTV-1.0.0-setup.exe](https://github.com/fishmenfish/zerotv/releases)
+Grab the latest release from [here](https://github.com/fishmenfish/zerotv/releases):
+- MSI installer (recommended)
+- NSIS installer
+- Portable exe (no install needed)
 
-### Build from Source
+### Build It Yourself
 
-**Requirements:**
-- Node.js 18+
-- pnpm 8+
-- Rust 1.70+
+Need Node.js 18+, pnpm, and Rust installed.
 
 ```bash
 git clone https://github.com/fishmenfish/zerotv.git
 cd zerotv
 pnpm install
-pnpm tauri:build
+pnpm installer
 ```
 
-## Usage
+Check [BUILD.md](BUILD.md) for more details.
+
+## How to Use
 
 1. Open ZeroTV
-2. Click "Load File" or "Load from URL"
-3. Select your M3U playlist
-4. Click a channel to play
+2. Load your M3U playlist (file or URL)
+3. Click a channel
+4. Watch
 
 ### Keyboard Shortcuts
 
@@ -72,7 +77,7 @@ pnpm tauri:build
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md)
+Found a bug? Want to add something? Check [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
 
@@ -89,6 +94,6 @@ MIT License - see [LICENSE](LICENSE)
 
 <div align="center">
 
-Made with ❤️ by fishmenfish
+Made by fishmenfish
 
 </div>
