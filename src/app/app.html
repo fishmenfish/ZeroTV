@@ -1,0 +1,278 @@
+<div class="app-container">
+  <!-- macOS Title Bar -->
+  <div class="titlebar">
+    <div class="traffic-lights">
+      <div class="traffic-light close" title="Close"></div>
+      <div class="traffic-light minimize" title="Minimize"></div>
+      <div class="traffic-light maximize" title="Maximize"></div>
+    </div>
+    
+    <div class="titlebar-content">
+      <div class="app-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        ZeroTV
+        @if (channels().length > 0) {
+          <span style="color: var(--macos-text-secondary); font-weight: 400; margin-left: 8px;">
+            {{ channels().length }} channels
+          </span>
+        }
+      </div>
+      
+      <div class="titlebar-actions">
+        <button (click)="showSettings.set(true)" class="macos-btn" title="Settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m18.2-5.2l-4.2 4.2m0 6l4.2 4.2"></path>
+          </svg>
+        </button>
+        
+        <button (click)="fileInput.click()" class="macos-btn primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          Load File
+        </button>
+        
+        <button (click)="loadPlaylistFromUrl()" class="macos-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          Load from URL
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <input 
+          type="text" 
+          class="search-box"
+          placeholder="Search channels..."
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+        />
+      </div>
+      
+      <div class="sidebar-controls">
+        <select 
+          class="control-select"
+          [value]="sortBy()"
+          (change)="onSortChange($event)"
+        >
+          <option value="name">Name</option>
+          <option value="group">Group</option>
+          <option value="favorites">Favorites</option>
+        </select>
+        
+        <button (click)="showPlaylistBrowser.set(true)" class="macos-btn" style="flex: 1;">
+          Browse
+        </button>
+      </div>
+      
+      @if (isLoading()) {
+        <div class="loading">
+          <div class="spinner"></div>
+          <p style="font-size: 13px; color: var(--macos-text-secondary);">Loading playlist...</p>
+        </div>
+      } @else if (sortedChannels().length === 0) {
+        <div class="loading">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="opacity: 0.3;">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <p style="font-size: 13px; color: var(--macos-text);">No channels</p>
+          <p style="font-size: 11px; color: var(--macos-text-secondary);">Load a playlist to get started</p>
+        </div>
+      } @else {
+        <div class="channel-list-wrapper">
+          <app-channel-list
+            [channels]="sortedChannels()"
+            [activeChannelId]="currentChannel()?.id"
+            (channelSelected)="onChannelSelected($event)"
+          />
+        </div>
+      }
+    </div>
+
+    <!-- Player Area -->
+    <div class="player-area">
+      <app-video-player [channel]="currentChannel()" />
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  @if (showSettings()) {
+    <div class="modal-overlay" (click)="showSettings.set(false)">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 class="modal-title">Settings</h2>
+          <button class="modal-close" (click)="showSettings.set(false)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--macos-text);">
+              Volume
+            </label>
+            <input 
+              type="range" 
+              min="0" 
+              max="100" 
+              [value]="playerService.volume()"
+              (input)="onVolumeChange($event)"
+              style="width: 100%;"
+            />
+            <div style="font-size: 11px; color: var(--macos-text-secondary); margin-top: 4px;">
+              {{ playerService.volume() }}%
+            </div>
+          </div>
+
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--macos-text);">
+              Custom Headers
+            </label>
+            <input 
+              type="text" 
+              class="search-box"
+              placeholder="User-Agent"
+              [value]="headerUserAgent()"
+              (input)="onUserAgentChange($event)"
+              style="margin-bottom: 8px;"
+            />
+            <input 
+              type="text" 
+              class="search-box"
+              placeholder="Referer"
+              [value]="headerReferer()"
+              (input)="onRefererChange($event)"
+            />
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <button (click)="exportSettings()" class="macos-btn" style="flex: 1;">
+              Export Settings
+            </button>
+            <button (click)="importInput.click()" class="macos-btn" style="flex: 1;">
+              Import Settings
+            </button>
+          </div>
+
+          <!-- About Section -->
+          <div style="margin-top: 32px; padding-top: 24px; border-top: 0.5px solid var(--macos-border);">
+            <div style="text-align: center;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="margin-bottom: 12px; color: var(--macos-accent);">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <h3 style="font-size: 17px; font-weight: 700; color: var(--macos-text); margin-bottom: 4px;">
+                ZeroTV
+              </h3>
+              <p style="font-size: 13px; color: var(--macos-text-secondary); margin-bottom: 16px;">
+                Version 1.0.0
+              </p>
+              <p style="font-size: 12px; color: var(--macos-text-secondary); margin-bottom: 8px;">
+                Lightweight IPTV player built with Angular & Tauri
+              </p>
+              <div style="display: flex; gap: 12px; justify-content: center; margin-top: 16px;">
+                <button (click)="openUrl('https://github.com/fishmenfish/zerotv')"
+                   style="background: transparent; border: none; color: var(--macos-accent); text-decoration: none; font-size: 12px; font-weight: 600; cursor: pointer;">
+                  GitHub
+                </button>
+                <span style="color: var(--macos-border);">•</span>
+                <button (click)="openUrl('https://www.paypal.com/paypalme/muhammadfaiz0817')"
+                   style="background: transparent; border: none; color: var(--macos-accent); text-decoration: none; font-size: 12px; font-weight: 600; cursor: pointer;">
+                  Support
+                </button>
+              </div>
+              <p style="font-size: 11px; color: var(--macos-text-secondary); margin-top: 16px;">
+                Made by fishmenfish
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Browse Playlists Modal -->
+  @if (showPlaylistBrowser()) {
+    <div class="modal-overlay" (click)="showPlaylistBrowser.set(false)">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 class="modal-title">Saved Playlists</h2>
+          <button class="modal-close" (click)="showPlaylistBrowser.set(false)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          @if (storage.getPlaylists().length === 0) {
+            <div style="text-align: center; padding: 40px 20px; color: var(--macos-text-secondary);">
+              <p style="font-size: 13px;">No saved playlists</p>
+            </div>
+          } @else {
+            @for (playlist of storage.getPlaylists(); track playlist.id) {
+              <div style="padding: 12px; border-bottom: 0.5px solid var(--macos-border); cursor: pointer; transition: all 0.15s ease;"
+                   (click)="loadPlaylistById(playlist.id); showPlaylistBrowser.set(false)">
+                <div style="font-size: 13px; font-weight: 600; color: var(--macos-text); margin-bottom: 4px;">
+                  {{ playlist.name }}
+                </div>
+                <div style="font-size: 11px; color: var(--macos-text-secondary);">
+                  {{ playlist.url }}
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Hidden Inputs -->
+  <input 
+    #fileInput 
+    type="file" 
+    accept=".m3u,.m3u8" 
+    (change)="loadPlaylist($event)"
+    style="display: none;"
+  />
+  
+  <input 
+    #importInput 
+    type="file" 
+    accept=".json" 
+    (change)="importSettings($event)"
+    style="display: none;"
+  />
+
+  <!-- Toast Notifications -->
+  @for (toast of toastService.toasts(); track toast.id) {
+    <div [style.position]="'fixed'" 
+         [style.top.px]="72 + $index * 90" 
+         [style.right.px]="20" 
+         [style.z-index]="2000">
+      <app-toast 
+        [type]="toast.type"
+        [title]="toast.title"
+        [message]="toast.message"
+        (close)="toastService.remove(toast.id)"
+      />
+    </div>
+  }
+</div>

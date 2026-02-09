@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+dist
+.angular
+
+# Build
+src-tauri/target
+*.exe
+*.dmg
+*.AppImage
+*.deb
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea

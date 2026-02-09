@@ -1,0 +1,71 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+.angular/
+src-tauri/target/
+src-tauri/gen/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.fleet/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Tauri
+src-tauri/Cargo.lock
+
+# Temp
+mpv-temp/
+*.tmp
+*.temp
+
+# Test
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Kiro (dev tool)
+.kiro/
+
+# Git
+*.orig
+*.rej
+
+# Backup
+*.bak
+*.backup
+*~
+
+# Release artifacts (keep in releases only)
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.msi

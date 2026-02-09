@@ -1,0 +1,13 @@
+#EXTM3U
+#EXTINF:-1 tvg-logo="https://i.imgur.com/example1.png" group-title="News",BBC News
+https://example.com/stream/bbc-news.m3u8
+#EXTINF:-1 tvg-logo="https://i.imgur.com/example2.png" group-title="News",CNN
+https://example.com/stream/cnn.m3u8
+#EXTINF:-1 tvg-logo="https://i.imgur.com/example3.png" group-title="Sports",ESPN
+https://example.com/stream/espn.m3u8
+#EXTINF:-1 tvg-logo="https://i.imgur.com/example4.png" group-title="Sports",Fox Sports
+https://example.com/stream/fox-sports.m3u8
+#EXTINF:-1 tvg-logo="https://i.imgur.com/example5.png" group-title="Entertainment",HBO
+https://example.com/stream/hbo.m3u8
+#EXTINF:-1 tvg-logo="https://i.imgur.com/example6.png" group-title="Entertainment",Netflix Channel
+https://example.com/stream/netflix.m3u8
