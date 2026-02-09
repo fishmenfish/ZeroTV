@@ -75,10 +75,6 @@ Check [BUILD.md](BUILD.md) for more details.
 - Rust
 - HLS.js
 
-## Contributing
-
-Found a bug? Want to add something? Check [CONTRIBUTING.md](CONTRIBUTING.md)
-
 ## License
 
 MIT License - see [LICENSE](LICENSE)
