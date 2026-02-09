@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, OnDestroy } from '@angular/core';
+import { interval, Subscription } from 'rxjs';
 
 export interface EpgProgram {
   channelId: string;
@@ -16,10 +17,10 @@ export interface EpgData {
 @Injectable({
   providedIn: 'root'
 })
-export class EpgService {
+export class EpgService implements OnDestroy {
   private epgData = signal<EpgData>({});
   private lastUpdate = signal<number>(0);
-  private updateInterval?: number;
+  private updateSubscription?: Subscription;
   private readonly CACHE_KEY = 'epg_cache';
   private readonly UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
   private readonly HOURS_AHEAD = 8;
@@ -27,6 +28,10 @@ export class EpgService {
   constructor() {
     this.loadFromCache();
     this.startAutoUpdate();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy();
   }
 
   private loadFromCache(): void {
@@ -64,14 +69,14 @@ export class EpgService {
   }
 
   private startAutoUpdate(): void {
-    // Update every hour
-    this.updateInterval = window.setInterval(() => {
+    // Update every hour using RxJS interval (properly cleaned up)
+    this.updateSubscription = interval(this.UPDATE_INTERVAL).subscribe(() => {
       const now = Date.now();
       if (now - this.lastUpdate() > this.UPDATE_INTERVAL) {
         this.lastUpdate.set(now);
         this.saveToCache();
       }
-    }, this.UPDATE_INTERVAL);
+    });
   }
 
   async loadEpgFromUrl(url: string, visibleChannelIds: string[]): Promise<void> {
@@ -174,8 +179,8 @@ export class EpgService {
   }
 
   destroy(): void {
-    if (this.updateInterval) {
-      clearInterval(this.updateInterval);
+    if (this.updateSubscription) {
+      this.updateSubscription.unsubscribe();
     }
   }
 }

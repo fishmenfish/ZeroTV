@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { invoke } from '@tauri-apps/api/core';
 import { computed } from '@angular/core';
 import { open } from '@tauri-apps/plugin-shell';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Channel } from './models/channel.model';
 import { StorageService } from './services/storage.service';
 import { PlayerService } from './services/player.service';
@@ -31,9 +33,9 @@ export class App implements OnInit, OnDestroy {
   sortBy = signal<'name' | 'group' | 'recent' | 'favorites'>('name');
   viewMode = signal<'list' | 'grid'>('list');
   searchQuery = signal('');
+  private searchSubject = new Subject<string>();
   showPlaylistBrowser = signal(false);
   sidebarCollapsed = signal(false);
-  private searchDebounceTimer?: number;
   isDragging = signal(false);
   showOnlineOnly = signal(false);
   channelStatus = signal<Map<string, boolean>>(new Map());
@@ -43,6 +45,12 @@ export class App implements OnInit, OnDestroy {
   editingPlaylist = signal<any>(null);
   headerUserAgent = signal('');
   headerReferer = signal('');
+
+  // Constants
+  private readonly SEARCH_DEBOUNCE_TIME = 300;
+  private readonly HOTKEY_HINT_DURATION = 1500;
+  private readonly CHANNEL_CHECK_BATCH_SIZE = 50;
+  private readonly CHANNEL_CHECK_TIMEOUT = 3000;
 
   constructor(
     public storage: StorageService,
@@ -54,7 +62,15 @@ export class App implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupHotkeys();
+    this.setupSearchDebounce();
     this.autoLoadPlaylist();
+  }
+
+  private setupSearchDebounce(): void {
+    this.searchSubject.pipe(
+      debounceTime(this.SEARCH_DEBOUNCE_TIME),
+      distinctUntilChanged()
+    ).subscribe(query => this.searchQuery.set(query));
   }
 
   private async autoLoadPlaylist(): Promise<void> {
@@ -76,16 +92,15 @@ export class App implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.searchSubject.complete();
     this.hotkeyService.unregister('ArrowUp');
     this.hotkeyService.unregister('ArrowDown');
     this.hotkeyService.unregister(' ');
     this.hotkeyService.unregister('m');
-    this.hotkeyService.unregister('M');
     this.hotkeyService.unregister('+');
     this.hotkeyService.unregister('=');
     this.hotkeyService.unregister('-');
     this.hotkeyService.unregister('f');
-    this.hotkeyService.unregister('F');
     this.hotkeyService.unregister('Escape');
     for (let i = 1; i <= 9; i++) {
       this.hotkeyService.unregister(i.toString());
@@ -98,7 +113,7 @@ export class App implements OnInit, OnDestroy {
     if (this.hotkeyTimeout) clearTimeout(this.hotkeyTimeout);
     this.hotkeyTimeout = window.setTimeout(() => {
       this.hotkeyHint.set(null);
-    }, 1500);
+    }, this.HOTKEY_HINT_DURATION);
   }
 
   private setupHotkeys(): void {
@@ -135,14 +150,6 @@ export class App implements OnInit, OnDestroy {
     });
 
     this.hotkeyService.register({
-      key: 'M',
-      action: () => {
-        this.toggleMute();
-        this.showHotkeyHint(this.playerService.volume() === 0 ? 'Muted' : 'Unmuted');
-      }
-    });
-
-    this.hotkeyService.register({
       key: '+',
       action: () => {
         const newVol = Math.min(100, this.playerService.volume() + 10);
@@ -171,14 +178,6 @@ export class App implements OnInit, OnDestroy {
 
     this.hotkeyService.register({
       key: 'f',
-      action: () => {
-        this.toggleFullscreen();
-        this.showHotkeyHint(document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen');
-      }
-    });
-
-    this.hotkeyService.register({
-      key: 'F',
       action: () => {
         this.toggleFullscreen();
         this.showHotkeyHint(document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen');
@@ -473,16 +472,7 @@ export class App implements OnInit, OnDestroy {
 
   onSearchInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const value = input.value;
-    
-    // Debounce search for better performance
-    if (this.searchDebounceTimer) {
-      clearTimeout(this.searchDebounceTimer);
-    }
-    
-    this.searchDebounceTimer = window.setTimeout(() => {
-      this.searchQuery.set(value);
-    }, 300);
+    this.searchSubject.next(input.value);
   }
 
   async loadPlaylistByCategory(category: string, url: string): Promise<void> {
@@ -536,7 +526,7 @@ export class App implements OnInit, OnDestroy {
     try {
       const response = await fetch(channel.url, {
         method: 'HEAD',
-        signal: AbortSignal.timeout(3000)
+        signal: AbortSignal.timeout(this.CHANNEL_CHECK_TIMEOUT)
       });
       return response.ok;
     } catch {
@@ -554,11 +544,10 @@ export class App implements OnInit, OnDestroy {
       this.toastService.info('Checking', 'Verifying channel availability...');
       
       const channels = this.channels();
-      const batchSize = 50;
       const statusMap = new Map<string, boolean>();
       
-      for (let i = 0; i < channels.length; i += batchSize) {
-        const batch = channels.slice(i, i + batchSize);
+      for (let i = 0; i < channels.length; i += this.CHANNEL_CHECK_BATCH_SIZE) {
+        const batch = channels.slice(i, i + this.CHANNEL_CHECK_BATCH_SIZE);
         const results = await Promise.all(
           batch.map(ch => this.checkChannelAvailability(ch))
         );

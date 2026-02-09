@@ -11,8 +11,12 @@ export class PlayerService {
   error = signal<string | null>(null);
   streamHealth = signal<'good' | 'poor' | 'offline'>('good');
   reconnectAttempts = signal(0);
-  private maxReconnectAttempts = 3;
   private reconnectTimeout?: number;
+  
+  // Constants
+  private readonly MAX_RECONNECT_ATTEMPTS = 3;
+  private readonly RECONNECT_BASE_DELAY = 2000;
+  private readonly RECONNECT_MAX_DELAY = 8000;
   
   // Stream metrics
   bitrate = signal<number>(0); // kbps
@@ -59,14 +63,14 @@ export class PlayerService {
 
   private attemptReconnect(): void {
     const attempts = this.reconnectAttempts();
-    if (attempts < this.maxReconnectAttempts) {
+    if (attempts < this.MAX_RECONNECT_ATTEMPTS) {
       this.reconnectAttempts.set(attempts + 1);
       this.streamHealth.set('poor');
       
       // Exponential backoff: 2s, 4s, 8s
-      const delay = Math.min(2000 * Math.pow(2, attempts), 8000);
+      const delay = Math.min(this.RECONNECT_BASE_DELAY * Math.pow(2, attempts), this.RECONNECT_MAX_DELAY);
       
-      this.error.set(`Reconnecting in ${delay / 1000}s... (${attempts + 1}/${this.maxReconnectAttempts})`);
+      this.error.set(`Reconnecting in ${delay / 1000}s... (${attempts + 1}/${this.MAX_RECONNECT_ATTEMPTS})`);
       
       this.reconnectTimeout = window.setTimeout(() => {
         const channel = this.currentChannel();

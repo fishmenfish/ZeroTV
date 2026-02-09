@@ -351,6 +351,14 @@ export class VideoPlayerComponent implements OnDestroy {
   private metricsInterval?: number;
   private lastDecodedFrames = 0;
   private lastDroppedFrames = 0;
+  private loadTimeout?: number;
+
+  // Constants
+  private readonly STREAM_LOAD_DELAY = 200;
+  private readonly METRICS_UPDATE_INTERVAL = 1000;
+  private readonly BUFFER_HEALTH_THRESHOLD_LOW = 20;
+  private readonly BUFFER_HEALTH_THRESHOLD_HIGH = 50;
+  private readonly BUFFER_HEALTH_MAX_SECONDS = 10;
 
   constructor(public playerService: PlayerService) {
     effect(() => {
@@ -364,6 +372,9 @@ export class VideoPlayerComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.loadTimeout) {
+      clearTimeout(this.loadTimeout);
+    }
     if (this.hls) {
       this.hls.destroy();
     }
@@ -409,21 +420,26 @@ export class VideoPlayerComponent implements OnDestroy {
         const bufferAhead = bufferedEnd - currentTime;
         
         // Buffer health: 100% = 10+ seconds, 0% = 0 seconds
-        const bufferPercent = Math.min(100, Math.round((bufferAhead / 10) * 100));
+        const bufferPercent = Math.min(100, Math.round((bufferAhead / this.BUFFER_HEALTH_MAX_SECONDS) * 100));
         this.playerService.bufferHealth.set(bufferPercent);
 
         // Update stream health based on buffer
-        if (bufferPercent < 20 && this.playerService.streamHealth() === 'good') {
+        if (bufferPercent < this.BUFFER_HEALTH_THRESHOLD_LOW && this.playerService.streamHealth() === 'good') {
           this.playerService.streamHealth.set('poor');
-        } else if (bufferPercent >= 50 && this.playerService.streamHealth() === 'poor') {
+        } else if (bufferPercent >= this.BUFFER_HEALTH_THRESHOLD_HIGH && this.playerService.streamHealth() === 'poor') {
           this.playerService.streamHealth.set('good');
         }
       }
-    }, 1000); // Update every second
+    }, this.METRICS_UPDATE_INTERVAL);
   }
 
   private loadStream(url: string): void {
-    setTimeout(() => {
+    // Clear any pending load timeout
+    if (this.loadTimeout) {
+      clearTimeout(this.loadTimeout);
+    }
+
+    this.loadTimeout = window.setTimeout(() => {
       const video = this.videoElement?.nativeElement;
       if (!video) {
         return;
@@ -527,7 +543,7 @@ export class VideoPlayerComponent implements OnDestroy {
           this.showPlayButton.set(true);
         });
       }
-    }, 200);
+    }, this.STREAM_LOAD_DELAY);
   }
 
   playVideo(): void {
