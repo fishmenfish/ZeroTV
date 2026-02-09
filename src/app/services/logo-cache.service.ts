@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
 
 @Injectable({
@@ -6,10 +6,11 @@ import { invoke } from '@tauri-apps/api/core';
 })
 export class LogoCacheService {
   private cache = new Map<string, string>();
-  private loading = new Set<string>();
+  private pendingRequests = new Map<string, Promise<string | null>>();
   private failed = new Set<string>();
 
   async getCachedLogo(url: string): Promise<string | null> {
+    // Return cached result
     if (this.cache.has(url)) {
       return this.cache.get(url)!;
     }
@@ -19,30 +20,40 @@ export class LogoCacheService {
       return null;
     }
 
-    // Skip if already loading
-    if (this.loading.has(url)) {
-      return null;
+    // Return existing promise if already loading (fixes race condition)
+    if (this.pendingRequests.has(url)) {
+      return this.pendingRequests.get(url)!;
     }
 
-    // Start loading
-    this.loading.add(url);
+    // Start new request
+    const promise = this.fetchLogo(url);
+    this.pendingRequests.set(url, promise);
 
+    try {
+      const result = await promise;
+      this.pendingRequests.delete(url);
+      return result;
+    } catch (err) {
+      this.pendingRequests.delete(url);
+      throw err;
+    }
+  }
+
+  private async fetchLogo(url: string): Promise<string | null> {
     try {
       const cachedUrl = await invoke<string>('cache_logo', { url });
       this.cache.set(url, cachedUrl);
-      this.loading.delete(url);
       return cachedUrl;
     } catch (err) {
       console.error('Failed to cache logo:', err);
       this.failed.add(url);
-      this.loading.delete(url);
       return null;
     }
   }
 
   clearCache(): void {
     this.cache.clear();
-    this.loading.clear();
+    this.pendingRequests.clear();
     this.failed.clear();
   }
 }
